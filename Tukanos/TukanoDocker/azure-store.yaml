@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tukano-app
+  labels:
+    app: tukano
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tukano
+  template:
+    metadata:
+      labels:
+        app: tukano
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux # Ensure deployment targets Linux nodes
+      containers:
+        - name: tukano-container
+          image: grave1/tukano-1:latest # Replace with your actual Docker image
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: 100m         # Minimum CPU requested for scheduling
+              memory: 256Mi     # Minimum memory requested for scheduling
+            limits:
+              cpu: 500m         # Maximum CPU allowed
+              memory: 512Mi     # Maximum memory allowed
+          readinessProbe:        # Ensures the pod is ready before receiving traffic
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:         # Ensures the pod is healthy
+            httpGet:
+              path: /
+              port: 8080
+            initialDelaySeconds: 30
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tukano-service
+spec:
+  selector:
+    app: tukano
+  ports:
+    - protocol: TCP
+      port: 80          # Port exposed to the outside
+      targetPort: 8080  # Port on the container
+  type: LoadBalancer    # Expose service externally with a LoadBalancer
