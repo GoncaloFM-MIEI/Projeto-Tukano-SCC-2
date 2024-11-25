@@ -1,40 +1,46 @@
+#TUKANO USER E SHORTS
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: tukano-app
+  name: tukano-user-shorts-app
   labels:
-    app: tukano
+    app: tukano-user-shorts
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: tukano
+      app: tukano-user-shorts
   template:
     metadata:
       labels:
-        app: tukano
+        app: tukano-user-shorts
     spec:
       nodeSelector:
-        kubernetes.io/os: linux # Ensure deployment targets Linux nodes
+        kubernetes.io/os: linux
       containers:
-        - name: tukano-container
-          image: grave1/tukano-1:latest # Replace with your actual Docker image
+        - name: user-shorts-container
+          image: grave1/tukano-users-shorts-1:latest
           ports:
             - containerPort: 8080
+          env:
+            - name: BLOBS_URL
+              value: "http://scc2425-grave1-tukano-blobs-1.germanywestcentral.azurecontainer.io:8081/tukano-blobs-1/rest/users"
+            - name: SECRET
+              value: "SEGREDO_BEM_GUARDADINHO"
           resources:
             requests:
-              cpu: 100m         # Minimum CPU requested for scheduling
-              memory: 256Mi     # Minimum memory requested for scheduling
+              cpu: 100m
+              memory: 256Mi
             limits:
-              cpu: 500m         # Maximum CPU allowed
-              memory: 512Mi     # Maximum memory allowed
-          readinessProbe:        # Ensures the pod is ready before receiving traffic
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
             httpGet:
               path: /
               port: 8080
             initialDelaySeconds: 10
             periodSeconds: 5
-          livenessProbe:         # Ensures the pod is healthy
+          livenessProbe:
             httpGet:
               path: /
               port: 8080
@@ -44,12 +50,70 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: tukano-service
+  name: tukano-user-shorts-service
 spec:
   selector:
-    app: tukano
+    app: tukano-user-shorts
   ports:
     - protocol: TCP
-      port: 80          # Port exposed to the outside
-      targetPort: 8080  # Port on the container
-  type: LoadBalancer    # Expose service externally with a LoadBalancer
+      port: 80
+      targetPort: 8080
+  type: LoadBalancer
+---
+
+#TUKANO BLOBS
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tukano-blobs-app
+  labels:
+    app: tukano-blobs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tukano-blobs
+  template:
+    metadata:
+      labels:
+        app: tukano-blobs
+    spec:
+      nodeSelector:
+        kubernetes.io/os: linux
+      containers:
+        - name: blobs-container
+          image: grave1/tukano-blobs-1:latest
+          ports:
+            - containerPort: 8082
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8082
+            initialDelaySeconds: 10
+            periodSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8082
+            initialDelaySeconds: 30
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tukano-blobs-service
+spec:
+  selector:
+    app: tukano-blobs
+  ports:
+    - protocol: TCP
+      port: 82
+      targetPort: 8082
+  type: LoadBalancer
