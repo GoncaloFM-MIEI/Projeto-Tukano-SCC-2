@@ -1,67 +1,68 @@
-#TUKANO USER E SHORTS
+# TUKANO USER E SHORTS
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: tukano-user-shorts-app
+  name: tukano-users-shorts-app
   labels:
-    app: tukano-user-shorts
+    app: tukano-users-shorts
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: tukano-user-shorts
+      app: tukano-users-shorts
   template:
     metadata:
       labels:
-        app: tukano-user-shorts
+        app: tukano-users-shorts
     spec:
       nodeSelector:
         kubernetes.io/os: linux
       containers:
-        - name: user-shorts-container
+        - name: users-shorts-container
           image: grave1/tukano-users-shorts-1:latest
           ports:
             - containerPort: 8080
           env:
             - name: BLOBS_URL
-              value: "http://scc2425-grave1-tukano-blobs-1.germanywestcentral.azurecontainer.io:8081/tukano-blobs-1/rest/users"
+              value: "http://tukano-blobs-service:8080/tukano-blobs-1/rest/users"
             - name: SECRET
               value: "SEGREDO_BEM_GUARDADINHO"
           resources:
             requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: 500m
+              cpu: 200m
               memory: 512Mi
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 8080
-            initialDelaySeconds: 10
-            periodSeconds: 5
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 8080
-            initialDelaySeconds: 30
-            periodSeconds: 10
+            limits:
+              cpu: 1000m
+              memory: 1024Mi
+        #  readinessProbe:
+        #    httpGet:
+        #      path: /
+        #      port: 8080
+        #    initialDelaySeconds: 60
+        #    periodSeconds: 10
+        #    timeoutSeconds: 5
+        #  livenessProbe:
+        #    httpGet:
+        #      path: /
+        #      port: 8080
+        #    initialDelaySeconds: 90
+        #    periodSeconds: 15
+        #    timeoutSeconds: 10
 ---
 apiVersion: v1
 kind: Service
 metadata:
-  name: tukano-user-shorts-service
+  name: tukano-users-shorts-service
 spec:
   selector:
-    app: tukano-user-shorts
+    app: tukano-users-shorts
   ports:
     - protocol: TCP
-      port: 80
+      port: 8080
       targetPort: 8080
   type: LoadBalancer
 ---
-
-#TUKANO BLOBS
+# TUKANO BLOBS
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -84,26 +85,28 @@ spec:
         - name: blobs-container
           image: grave1/tukano-blobs-1:latest
           ports:
-            - containerPort: 8082
+            - containerPort: 8080
           resources:
             requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              cpu: 500m
+              cpu: 200m
               memory: 512Mi
-          readinessProbe:
-            httpGet:
-              path: /
-              port: 8082
-            initialDelaySeconds: 10
-            periodSeconds: 5
-          livenessProbe:
-            httpGet:
-              path: /
-              port: 8082
-            initialDelaySeconds: 30
-            periodSeconds: 10
+            limits:
+              cpu: 1000m
+              memory: 1024Mi
+      #    readinessProbe:
+      #      httpGet:
+      #        path: /
+      #        port: 8080
+      #      initialDelaySeconds: 60
+      #      periodSeconds: 10
+      #      timeoutSeconds: 5
+      #    livenessProbe:
+      #      httpGet:
+      #        path: /
+      #        port: 8080
+      #      initialDelaySeconds: 90
+      #      periodSeconds: 15
+      #      timeoutSeconds: 10
 ---
 apiVersion: v1
 kind: Service
@@ -114,6 +117,6 @@ spec:
     app: tukano-blobs
   ports:
     - protocol: TCP
-      port: 82
-      targetPort: 8082
+      port: 8080
+      targetPort: 8080
   type: LoadBalancer
