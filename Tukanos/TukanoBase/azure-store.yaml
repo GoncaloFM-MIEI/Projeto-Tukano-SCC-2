@@ -1,0 +1,198 @@
+# Persistent Volume for storing blobs
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: tukano-blob-pv
+spec:
+  capacity:
+    storage: 2Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: manual  # The StorageClass name (just a label)
+  hostPath:
+    path: "/mnt/data/blobs"         # Local path on the Minikube VM
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tukano-blob-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: manual   # The StorageClass name must match the PV's storageClassName
+  resources:
+    requests:
+      storage: 1Gi
+
+---
+# tukano-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tukano
+  labels:
+    app: tukano
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tukano
+  template:
+    metadata:
+      labels:
+        app: tukano
+    spec:
+      containers:
+        - name: tukano
+          image: goncalofm/tukano-1:latest      # Replace with your Tukano Docker image
+          volumeMounts:
+            - mountPath: "/mnt/vol"
+              name: blob-storage
+          ports:
+            - containerPort: 8080               # Replace with your application's port
+          env:
+            - name: BLOBS_URL
+              value: "http://127.0.0.1:30080/tukano-1/rest"
+            - name: SECRET
+              value: "SEGREDO_DO_ZE_RIC"
+            - name: DB_HOST
+              value: "postgres"                 # PostgreSQL Service name
+            - name: DB_PORT
+              value: "5432"                     # PostgreSQL port
+            - name: DB_NAME
+              value: "tukano_db"                # Database name
+            - name: DB_USER
+              value: "tukano_user"              # Username for PostgreSQL
+            - name: DB_PASSWORD
+              value: "tukano_password"          # Password for PostgreSQL
+            - name: BLOBS_PATH
+              value: "/mnt/vol/"
+      volumes:
+        - name: blob-storage
+          persistentVolumeClaim:
+            claimName: tukano-blob-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tukano
+spec:
+  selector:
+    app: tukano
+  ports:
+    - protocol: TCP
+      port: 8080                           # External port for the Tukano app
+      targetPort: 8080                     # Tukano container port
+      nodePort: 30080
+  type: NodePort
+
+---
+# postgresql-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  labels:
+    app: postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:15
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRESQL_LOG_LEVEL
+              value: "DEBUG"
+            - name: POSTGRESQL_LOG_STATEMENT
+              value: "all"
+            - name: POSTGRESQL_LOG_DURATION
+              value: "on"
+            - name: POSTGRESQL_LOG_MIN_MESSAGES
+              value: "debug1"
+            - name: POSTGRES_USER
+              value: tukano_user       # Username for PostgreSQL
+            - name: POSTGRES_PASSWORD
+              value: tukano_password   # Password for the user
+            - name: POSTGRES_DB
+              value: tukano_db         # Database name
+#          volumeMounts:
+#            - name: postgres-data
+#              mountPath: /var/lib/postgresql/data
+#      volumes:
+#        - name: postgres-data
+#          persistentVolumeClaim:
+#            claimName: postgres-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  selector:
+    app: postgres
+  ports:
+    - protocol: TCP
+      port: 5432
+      targetPort: 5432
+
+#THERE CAN BE A VOLUME FOR THE POSTGRE DATABASE SO THAT THE DATA CAN LIVE LONGER THAN THE LIFE CYCLE OF THE POD
+
+# Secrets for PostgreSQL credentials
+#---
+#apiVersion: v1
+#kind: Secret
+#metadata:
+#  name: postgres-secret
+#type: Opaque
+#data:
+#  username: admin # base64 for 'test_user'
+#  password: admin # base64 for 'secret_password'
+
+# Deployment for Redis
+#---
+#apiVersion: apps/v1
+#kind: Deployment
+#metadata:
+#  name: redis-service
+#  labels:
+#    app: redis
+#spec:
+#  replicas: 1
+#  selector:
+#    matchLabels:
+#      app: redis
+#  template:
+#    metadata:
+#      labels:
+#        app: redis
+#    spec:
+#      containers:
+#        - name: redis-container
+#          image: redis:latest
+#          ports:
+#            - containerPort: 6379
+#
+#---
+#apiVersion: v1
+#kind: Service
+#metadata:
+#  name: redis-service
+#spec:
+#  selector:
+#    app: redis
+#  ports:
+#    - protocol: TCP
+#      port: 6379
+#      targetPort: 6379
+#  type: ClusterIP

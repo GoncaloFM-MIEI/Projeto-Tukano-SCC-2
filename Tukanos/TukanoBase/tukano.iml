@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<module version="4">
+  <component name="AdditionalModuleElements">
+    <content url="file://$MODULE_DIR$" dumb="true">
+      <sourceFolder url="file://$MODULE_DIR$/src/main/java" isTestSource="false" />
+    </content>
+  </component>
+  <component name="FacetManager">
+    <facet type="azure" name="Azure">
+      <configuration>
+        <option name="dotAzurePath" value="C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\.azure" />
+      </configuration>
+    </facet>
+  </component>
+</module>

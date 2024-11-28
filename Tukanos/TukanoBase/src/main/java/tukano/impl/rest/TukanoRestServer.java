@@ -28,7 +28,7 @@ public class TukanoRestServer extends Application {
 	private Set<Object> singletons = new HashSet<>();
 	private Set<Class<?>> resources = new HashSet<>();
 
-	public static String serverURI;
+	public static String serverURI = System.getenv("BLOBS_URL");
 
 	static {
 		System.setProperty("java.util.logging.SimpleFormatter.format", "%4$s: %5$s");
@@ -82,7 +82,7 @@ public class TukanoRestServer extends Application {
 		Args.use(args);
 
 		//Token.setSecret( Args.valueOf("-secret", ""));
-		Token.setSecret("segredo");
+		//Token.setSecret("segredo");
 		//Props.load( Args.valueOf("-props", "").split(","));
 
 		new TukanoRestServer().start();

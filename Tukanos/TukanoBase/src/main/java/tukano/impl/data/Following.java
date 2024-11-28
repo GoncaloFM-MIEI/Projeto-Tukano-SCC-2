@@ -4,8 +4,10 @@ import java.util.Objects;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 
 @Entity
+@Table(name = "Following")
 public class Following{
 
 	@Id 
@@ -14,7 +16,7 @@ public class Following{
 	@Id 
 	String followee;
 
-	Following() {}
+	public Following() {}
 
 	public Following(String follower, String followee) {
 		super();
