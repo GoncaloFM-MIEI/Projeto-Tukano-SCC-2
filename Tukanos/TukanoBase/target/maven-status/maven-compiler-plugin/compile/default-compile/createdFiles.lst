@@ -13,6 +13,7 @@ tukano\impl\JavaBlobs.class
 tukano\api\User.class
 tukano\api\rest\RestUsers.class
 tukano\impl\JavaUsers.class
+utils\RedisCache.class
 utils\DB.class
 tukano\clients\rest\RestShortsClient$3.class
 tukano\impl\rest\TukanoRestServer.class

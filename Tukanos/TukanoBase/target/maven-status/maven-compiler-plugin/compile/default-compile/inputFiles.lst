@@ -33,6 +33,7 @@ C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano
 C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\src\main\java\tukano\api\Result.java
 C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\src\main\test\tukano\clients\rest\RestUsersClient.java
 C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\src\main\java\utils\Hash.java
+C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\src\main\java\utils\RedisCache.java
 C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\src\main\test\tukano\clients\rest\RestBlobsClient.java
 C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\src\main\java\tukano\impl\rest\utils\GenericExceptionMapper.java
 C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\src\main\test\tukano\clients\rest\RestShortsClient.java
