@@ -3,6 +3,7 @@ C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano
 C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\src\main\java\tukano\api\rest\RestUsers.java
 C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\src\main\java\tukano\api\Users.java
 C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\src\main\java\utils\Hex.java
+C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\src\main\java\tukano\impl\JavaLogin.java
 C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\src\main\java\tukano\impl\rest\RestShortsResource.java
 C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\src\main\java\tukano\impl\data\Following.java
 C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\src\main\java\utils\IO.java
@@ -26,13 +27,16 @@ C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano
 C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\src\main\java\tukano\impl\JavaBlobs.java
 C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\src\main\java\utils\DB.java
 C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\src\main\java\tukano\impl\rest\utils\CustomLoggingFilter.java
+C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\src\main\java\tukano\impl\auth\RequestCookies.java
 C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\src\main\java\tukano\api\Shorts.java
 C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\src\main\java\utils\TryCatch.java
 C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\src\main\test\test\Test.java
 C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\src\main\java\tukano\api\Short.java
 C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\src\main\java\tukano\api\Result.java
+C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\src\main\java\tukano\impl\auth\RequestCookiesFilter.java
 C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\src\main\test\tukano\clients\rest\RestUsersClient.java
 C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\src\main\java\utils\Hash.java
+C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\src\main\java\tukano\impl\auth\RequestCookiesCleanupFilter.java
 C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\src\main\java\utils\RedisCache.java
 C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\src\main\test\tukano\clients\rest\RestBlobsClient.java
 C:\Users\Goncalo\Documents\UNIVERSIDADE\4_Ano\1_Semestre\SCC\Labs\Projeto-Tukano-SCC-2\Tukanos\TukanoBase\src\main\java\tukano\impl\rest\utils\GenericExceptionMapper.java

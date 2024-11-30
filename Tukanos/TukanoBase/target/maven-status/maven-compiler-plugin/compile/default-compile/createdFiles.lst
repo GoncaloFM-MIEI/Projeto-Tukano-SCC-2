@@ -34,7 +34,9 @@ tukano\clients\rest\RestShortsClient$2.class
 utils\Queues.class
 tukano\api\rest\RestShorts.class
 tukano\api\Result$ErrorCode.class
+tukano\impl\JavaLogin.class
 tukano\clients\rest\RestUsersClient$1.class
+tukano\impl\auth\RequestCookiesFilter.class
 tukano\impl\data\Likes.class
 utils\TryCatch.class
 utils\Hex.class
@@ -45,6 +47,8 @@ tukano\impl\storage\FilesystemStorage.class
 tukano\api\ErrorResult.class
 tukano\clients\rest\RestBlobsClient.class
 utils\TryCatch$ThrowableSupplier.class
+tukano\impl\auth\RequestCookiesCleanupFilter.class
+tukano\impl\auth\RequestCookies.class
 tukano\clients\rest\RestShortsClient$1.class
 utils\JSON.class
 tukano\clients\rest\RestShortsClient$4.class
