@@ -8,7 +8,11 @@ import java.util.logging.Logger;
 import jakarta.ws.rs.core.Application;
 import org.glassfish.jersey.jdkhttp.JdkHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
+import tukano.impl.JavaLogin;
 import tukano.impl.Token;
+import tukano.impl.auth.RequestCookies;
+import tukano.impl.auth.RequestCookiesCleanupFilter;
+import tukano.impl.auth.RequestCookiesFilter;
 import utils.Args;
 import utils.IP;
 import utils.Props;
@@ -38,6 +42,12 @@ public class TukanoRestServer extends Application {
 		resources.add(RestUsersResource.class);
 		resources.add(RestShortsResource.class);
 		resources.add(RestBlobsResource.class);
+		resources.add(JavaLogin.class);
+
+		//resources.add(ControlResource.class);
+		resources.add(RequestCookiesCleanupFilter.class);
+		resources.add(RequestCookiesFilter.class);
+		//resources.add(Authentication.class);
 
 //		singletons.add(new RestUsersResource());
 //		singletons.add(new RestShortsResource());
@@ -64,7 +74,9 @@ public class TukanoRestServer extends Application {
 
 		ResourceConfig config = new ResourceConfig();
 
-
+		config.register(JavaLogin.class);
+		config.register(RequestCookiesCleanupFilter.class);
+		config.register(RequestCookiesFilter.class);
 
 		config.register(RestBlobsResource.class);
 		config.register(RestUsersResource.class);

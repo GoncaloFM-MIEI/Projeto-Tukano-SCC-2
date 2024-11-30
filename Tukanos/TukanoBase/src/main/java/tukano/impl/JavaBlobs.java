@@ -1,18 +1,26 @@
 package tukano.impl;
 
 import static java.lang.String.format;
+import static tukano.api.Result.ErrorCode.UNAUTHORIZED;
 import static tukano.api.Result.error;
 import static tukano.api.Result.ErrorCode.FORBIDDEN;
 
 import java.util.logging.Logger;
 
+import jakarta.ws.rs.NotAuthorizedException;
+import redis.clients.jedis.Jedis;
 import tukano.api.Blobs;
 import tukano.api.Result;
+import tukano.impl.auth.RequestCookies;
 import tukano.impl.rest.TukanoRestServer;
 import tukano.impl.storage.BlobStorage;
 import tukano.impl.storage.FilesystemStorage;
 import utils.Hash;
 import utils.Hex;
+
+import jakarta.ws.rs.core.Cookie;
+import utils.JSON;
+import utils.RedisCache;
 
 public class JavaBlobs implements Blobs {
 	
@@ -21,7 +29,10 @@ public class JavaBlobs implements Blobs {
 
 	public String baseURI;
 	private BlobStorage storage;
-	
+
+	static final String COOKIE_KEY = "scc:session";
+	static final String SESSION_PREFIX = "session:";
+
 	synchronized public static Blobs getInstance() {
 		if( instance == null )
 			instance = new JavaBlobs();
@@ -40,6 +51,11 @@ public class JavaBlobs implements Blobs {
 		if (!validBlobId(blobId, token))
 			return error(FORBIDDEN);
 
+		if(!validateSession(blobId.split("\\+")[0])){
+			return error(UNAUTHORIZED);
+		}
+
+
 		return storage.write( toPath( blobId ), bytes);
 	}
 
@@ -49,6 +65,10 @@ public class JavaBlobs implements Blobs {
 
 		if( ! validBlobId( blobId, token ) )
 			return error(FORBIDDEN);
+
+		if(!validateSessionCookie()){
+			return error(UNAUTHORIZED);
+		}
 
 		return storage.read( toPath( blobId ) );
 	}
@@ -60,6 +80,10 @@ public class JavaBlobs implements Blobs {
 		if( ! validBlobId( blobId, token ) )
 			return error(FORBIDDEN);
 
+		if(!validateSession(blobId.split("\\+")[0])){
+			return error(UNAUTHORIZED);
+		}
+
 		return storage.delete( toPath(blobId));
 	}
 	
@@ -69,6 +93,10 @@ public class JavaBlobs implements Blobs {
 
 		if( ! Token.isValid( token, userId ) )
 			return error(FORBIDDEN);
+
+		if(!validateSession(userId)){
+			return error(UNAUTHORIZED);
+		}
 		
 		return storage.delete( toPath(userId));
 	}
@@ -79,5 +107,63 @@ public class JavaBlobs implements Blobs {
 
 	private String toPath(String blobId) {
 		return blobId.replace("+", "/");
+	}
+
+	public boolean validateSession(String userId) throws NotAuthorizedException {
+		var cookies = RequestCookies.get();
+		return validateSession( cookies.get(COOKIE_KEY ), userId );
+	}
+
+	public boolean validateSession(Cookie cookie, String userId) throws NotAuthorizedException {
+
+		if (cookie == null )
+			throw new NotAuthorizedException("No session initialized");
+
+		try (Jedis jedis = RedisCache.getCachePool().getResource()) {
+			var key = SESSION_PREFIX + cookie.getValue();
+
+			var value = jedis.get(key);
+
+			if(value == null) {
+				//throw new NotAuthorizedException("No valid session initialized");
+				return false;
+			}
+
+			if(!JSON.decode(value, String.class).equals(userId)){
+				//throw new NotAuthorizedException("Invalid session");
+				return false;
+			}
+
+		}
+
+		Log.info(() -> "USER ESTA BEM LOGADO");
+
+		return true;
+	}
+
+	public boolean validateSessionCookie() throws NotAuthorizedException {
+		var cookies = RequestCookies.get();
+		return validateSessionCookie( cookies.get(COOKIE_KEY));
+	}
+
+	public boolean validateSessionCookie(Cookie cookie) throws NotAuthorizedException {
+
+		if (cookie == null )
+			return false;
+			//throw new NotAuthorizedException("No session initialized");
+
+		try (Jedis jedis = RedisCache.getCachePool().getResource()) {
+			var key = SESSION_PREFIX + cookie.getValue();
+
+			var value = jedis.get(key);
+
+			if(value == null) {
+				return false;
+				//throw new NotAuthorizedException("No valid session initialized");
+			}
+
+		}
+
+		return true;
 	}
 }
