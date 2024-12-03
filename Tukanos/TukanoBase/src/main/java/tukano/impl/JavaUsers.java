@@ -12,10 +12,13 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.logging.Logger;
 
+import jakarta.ws.rs.NotAuthorizedException;
+import jakarta.ws.rs.core.Cookie;
 import redis.clients.jedis.Jedis;
 import tukano.api.Result;
 import tukano.api.User;
 import tukano.api.Users;
+import tukano.impl.auth.RequestCookies;
 import utils.DB;
 import utils.JSON;
 import utils.RedisCache;
@@ -28,6 +31,9 @@ public class JavaUsers implements Users {
 
 	private static String USER_PREFIX = "user:";
 	private static int EXPIRATION_TIME = 120;
+
+	static final String COOKIE_KEY = "scc:session";
+	static final String SESSION_PREFIX = "session:";
 
 	private static final String REDIS_HOST = System.getenv("REDIS_HOST"); // Kubernetes Service name
 	private static final int REDIS_PORT = Integer.parseInt(System.getenv("REDIS_PORT"));
@@ -159,15 +165,15 @@ public class JavaUsers implements Users {
 
 		return errorOrResult( validatedUserOrError(res, pwd), user -> {
 
-			// Delete user shorts and related info asynchronously in a separate thread
-			Executors.defaultThreadFactory().newThread( () -> {
-				JavaBlobs.getInstance().deleteAllBlobs(userId, Token.get(userId));
-			}).start();
-			Executors.defaultThreadFactory().newThread( () -> {
-				JavaShorts.getInstance().deleteAllShorts(userId, pwd, Token.get(userId));
-			}).start();
+			//Executors.defaultThreadFactory().newThread( () -> {
+			JavaShorts.getInstance().deleteAllShorts(userId, pwd, Token.get(userId));
 
-			DB.deleteOne( user);
+			//}).start();
+
+			//Executors.defaultThreadFactory().newThread(() -> {
+			JavaBlobs.getInstance().deleteAllBlobs(userId, Token.get(userId));
+			//}).start();
+
 
 			Log.info(() -> String.format("\n\nDELETE USER (IN CACHE): %s\n\n", user.getUserId()));
 			try (Jedis jedis = RedisCache.getCachePool().getResource()) {
@@ -208,5 +214,31 @@ public class JavaUsers implements Users {
 	
 	private boolean badUpdateUserInfo( String userId, String pwd, User info) {
 		return (userId == null || pwd == null || info.getUserId() != null && ! userId.equals( info.getUserId()));
+	}
+
+	public boolean validateSessionCookie() throws NotAuthorizedException {
+		var cookies = RequestCookies.get();
+		return validateSessionCookie( cookies.get(COOKIE_KEY));
+	}
+
+	public boolean validateSessionCookie(Cookie cookie) throws NotAuthorizedException {
+
+		if (cookie == null )
+			return false;
+		//throw new NotAuthorizedException("No session initialized");
+
+		try (Jedis jedis = RedisCache.getCachePool().getResource()) {
+			var key = SESSION_PREFIX + cookie.getValue();
+
+			var value = jedis.get(key);
+
+			if(value == null) {
+				return false;
+				//throw new NotAuthorizedException("No valid session initialized");
+			}
+
+		}
+
+		return true;
 	}
 }

@@ -54,7 +54,7 @@ spec:
             - containerPort: 8080               # Replace with your application's port
           env:
             - name: BLOBS_URL
-              value: "http://127.0.0.1:30080/tukano-1/rest"
+              value: "http://goncalofmtukano.germanywestcentral.cloudapp.azure.com:8080/tukano-1/rest"
             - name: REDIS_URL
               value: "http://redis-service:6379/"
             - name: REDIS_HOST
@@ -91,8 +91,7 @@ spec:
     - protocol: TCP
       port: 8080                           # External port for the Tukano app
       targetPort: 8080                     # Tukano container port
-      nodePort: 30080
-  type: NodePort
+  type: LoadBalancer
 
 ---
 # postgresql-deployment.yaml

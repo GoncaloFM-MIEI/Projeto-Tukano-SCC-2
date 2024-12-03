@@ -1,13 +1,12 @@
 package tukano.impl;
 
 import static java.lang.String.format;
+import static tukano.api.Result.ErrorCode.*;
 import static tukano.api.Result.error;
 import static tukano.api.Result.errorOrResult;
 import static tukano.api.Result.errorOrValue;
 import static tukano.api.Result.errorOrVoid;
 import static tukano.api.Result.ok;
-import static tukano.api.Result.ErrorCode.BAD_REQUEST;
-import static tukano.api.Result.ErrorCode.FORBIDDEN;
 import static utils.DB.getOne;
 
 import java.util.ArrayList;
@@ -164,39 +163,35 @@ public class JavaShorts implements Shorts {
 	public Result<Void> deleteShort(String shortId, String password) {
 		Log.info(() -> format("deleteShort : shortId = %s, pwd = %s\n", shortId, password));
 
-		return errorOrResult( getShort(shortId), shrt -> {
-			return errorOrResult( okUser( shrt.getOwnerId(), password), user -> {
-				return DB.transaction( hibernate -> {
-
-					hibernate.remove( shrt);
+		return errorOrResult(getShort(shortId), shrt -> {
+			return errorOrResult(okUser(shrt.getOwnerId(), password), user -> {
+				Result<Void> dbResult = DB.transaction(hibernate -> {
+					hibernate.remove(shrt);
 
 					var query = format("DELETE FROM Likes l WHERE l.shortId = '%s'", shortId);
-					hibernate.createNativeQuery( query, Likes.class).executeUpdate();
-
-
-					try (Jedis jedis = RedisCache.getCachePool().getResource()) {
-						//Pipeline pipeline = jedis.pipelined();
-
-						var key = SHORT_PREFIX + shortId; //short
-						jedis.del(key);
-
-						var cKey = COUNTER_PREFIX + shortId; //counter likes
-						jedis.del(cKey);
-
-						var lKey = SHORT_LIKES_LIST_PREFIX + shortId; //list likes (user ids)
-						jedis.del(lKey);
-
-						var uKey = USER_SHORTS_LIST_PREFIX + user.getUserId();
-						jedis.lrem(uKey, 0, shortId);
-
-						//pipeline.sync();
-						//Set<String> fKeys = jedis.keys(FEED_PREFIX);
-						//fKeys.forEach(fKey -> jedis.lrem(fKey, 0, shortId));
-					}
-
-
-					JavaBlobs.getInstance().delete(shrt.getShortId(), Token.get(shrt.getShortId()) );
+					hibernate.createNativeQuery(query, Likes.class).executeUpdate();
 				});
+
+				if (!dbResult.isOK()) {
+					return dbResult;
+				}
+
+				try (Jedis jedis = RedisCache.getCachePool().getResource()) {
+					var key = SHORT_PREFIX + shortId;
+					jedis.del(key);
+
+					var cKey = COUNTER_PREFIX + shortId;
+					jedis.del(cKey);
+
+					var lKey = SHORT_LIKES_LIST_PREFIX + shortId;
+					jedis.del(lKey);
+
+					var uKey = USER_SHORTS_LIST_PREFIX + user.getUserId();
+					jedis.lrem(uKey, 0, JSON.encode(shortId));
+				}
+
+				JavaBlobs.getInstance().delete(shrt.getShortId(), Token.get(shrt.getShortId()));
+				return Result.ok();
 			});
 		});
 	}
@@ -404,7 +399,7 @@ public class JavaShorts implements Shorts {
 		Log.info(() -> format("getFeed : userId = %s, pwd = %s\n", userId, password));
 
 		final var QUERY_FMT = """
-				SELECT s.shortId, s.timestamp FROM Short s WHERE	s.ownerId = '%s'				
+				SELECT s.shortId, s.timestamp FROM Short s WHERE s.ownerId = '%s'				
 				UNION			
 				SELECT s.shortId, s.timestamp FROM Short s, Following f 
 					WHERE 
@@ -425,29 +420,101 @@ public class JavaShorts implements Shorts {
 		else
 			return error( res.error() );
 	}
-	
+
 	@Override
 	public Result<Void> deleteAllShorts(String userId, String password, String token) {
 		Log.info(() -> format("deleteAllShorts : userId = %s, password = %s, token = %s\n", userId, password, token));
 
-		if( ! Token.isValid( token, userId ) )
+		if (!Token.isValid(token, userId))
 			return error(FORBIDDEN);
-		
-		return DB.transaction( (hibernate) -> {
-						
+
+		removeFromCache(userId, password);
+
+		/*
+		return DB.transaction((hibernate) -> {
+
 			//delete shorts
-			var query1 = format("DELETE Short s WHERE s.ownerId = '%s'", userId);		
+			var query1 = format("DELETE FROM Short s WHERE s.ownerId = '%s'", userId);
 			hibernate.createQuery(query1, Short.class).executeUpdate();
-			
+
 			//delete follows
-			var query2 = format("DELETE Following f WHERE f.follower = '%s' OR f.followee = '%s'", userId, userId);		
+			var query2 = format("DELETE FROM Following f WHERE f.follower = '%s' OR f.followee = '%s'", userId, userId);
 			hibernate.createQuery(query2, Following.class).executeUpdate();
-			
+
 			//delete likes
-			var query3 = format("DELETE Likes l WHERE l.ownerId = '%s' OR l.userId = '%s'", userId, userId);
+			var query3 = format("DELETE FROM Likes l WHERE l.ownerId = '%s' OR l.userId = '%s'", userId, userId);
 			hibernate.createQuery(query3, Likes.class).executeUpdate();
-			
 		});
+		*/
+
+		try {
+			var query1 = format("DELETE FROM Short s WHERE s.ownerId = '%s'", userId);
+			DB.sql(query1, Short.class);
+
+			var query2 = format("DELETE FROM Following f WHERE f.follower = '%s' OR f.followee = '%s'", userId, userId);
+			DB.sql(query2, Following.class);
+
+			var query3 = format("DELETE FROM Likes l WHERE l.ownerId = '%s' OR l.userId = '%s'", userId, userId);
+			DB.sql(query3, Likes.class);
+
+			return ok();
+		} catch (Exception e) {
+			return error(INTERNAL_ERROR);
+		}
 	}
+
+
+	public void removeFromCache(String userId, String password) {
+
+		try (Jedis jedis = RedisCache.getCachePool().getResource()) {
+			var sKey = USER_SHORTS_LIST_PREFIX + userId;
+			jedis.del(sKey);
+			var fKey = FOLLOWERS_PREFIX + userId;
+			jedis.del(fKey);
+		}
+
+		try (Jedis jedis = RedisCache.getCachePool().getResource()) {
+
+			var query1Select = format("SELECT s.shortid FROM Short s WHERE s.ownerId = '%s'", userId);
+			List<String> res1 = DB.sql(query1Select, String.class);
+			for (String s : res1) {
+				var key = SHORT_LIKES_LIST_PREFIX + s;
+				jedis.del(key);
+				var sKey = SHORT_PREFIX + s;
+				jedis.del(sKey);
+				var cKey = COUNTER_PREFIX + s;
+				jedis.del(cKey);
+			}
+
+			var query2Select = format("SELECT f.followee FROM Following f WHERE f.follower = '%s'", userId);
+			List<String> res2 = DB.sql(query2Select, String.class);
+			for (String f : res2) {
+				var key = USER_SHORTS_LIST_PREFIX + f;
+				jedis.lrem(key, 0, JSON.encode(userId));
+			}
+
+			var query3Select = format("SELECT l.shortid FROM Likes l WHERE l.userId = '%s'", userId);
+			List<String> res3 = DB.sql(query3Select, String.class);
+			for (String l : res3) {
+				var key = USER_SHORTS_LIST_PREFIX + l;
+				jedis.lrem(key, 0, JSON.encode(userId));
+			}
+
+		}
+
+	}
+
+
+
+
+
+
+
+
+
+
+
+
+
 	
 }

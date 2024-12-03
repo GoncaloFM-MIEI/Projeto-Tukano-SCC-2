@@ -94,6 +94,7 @@ public class JavaBlobs implements Blobs {
 		if( ! Token.isValid( token, userId ) )
 			return error(FORBIDDEN);
 
+
 		if(!validateSession(userId)){
 			return error(UNAUTHORIZED);
 		}

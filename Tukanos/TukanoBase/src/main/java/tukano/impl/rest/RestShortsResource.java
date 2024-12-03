@@ -33,7 +33,8 @@ public class RestShortsResource extends RestResource implements RestShorts {
 	}
 
 	@Override
-	public void follow(String userId1, String userId2, boolean isFollowing, String password) {
+	public void follow(String userId1, String userId2, FollowRequest isFollowingC, String password) {
+		boolean isFollowing = isFollowingC.isFollowing();
 		super.resultOrThrow( impl.follow(userId1, userId2, isFollowing, password));
 	}
 
@@ -43,7 +44,8 @@ public class RestShortsResource extends RestResource implements RestShorts {
 	}
 
 	@Override
-	public void like(String shortId, String userId, boolean isLiked, String password) {
+	public void like(String shortId, String userId, LikeRequest isLikedC, String password) {
+		boolean isLiked = isLikedC.isLiked();
 		super.resultOrThrow( impl.like(shortId, userId, isLiked, password));
 	}
 

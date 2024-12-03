@@ -12,6 +12,7 @@ tukano\impl\JavaShorts.class
 tukano\impl\JavaBlobs.class
 tukano\api\User.class
 tukano\api\rest\RestUsers.class
+tukano\api\rest\RestShorts$FollowRequest.class
 tukano\impl\JavaUsers.class
 utils\RedisCache.class
 utils\DB.class
@@ -36,6 +37,7 @@ tukano\api\rest\RestShorts.class
 tukano\api\Result$ErrorCode.class
 tukano\impl\JavaLogin.class
 tukano\clients\rest\RestUsersClient$1.class
+tukano\api\rest\RestShorts$LikeRequest.class
 tukano\impl\auth\RequestCookiesFilter.class
 tukano\impl\data\Likes.class
 utils\TryCatch.class
