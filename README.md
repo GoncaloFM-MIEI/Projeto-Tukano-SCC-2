@@ -1,5 +1,5 @@
-<h1>Project 1</h1>
-<h2>Azure Tukano</h2>
+<h1>Project 2</h1>
+<h2>Azure Tukano in Kubernetes</h2>
 <h3>
 <p>Cloud Computing Systems 2024/2025</p>
 <p>Masters Degree in Computer Science</p>
@@ -14,5 +14,5 @@
 <br>
 <p>To be noted:</p>
 <ul>
-    <li>To toggle Redis/Postgree check <strong>azurekeys-regions.props</strong> file</li>
+    <li>Login endpoint: <strong>url/login/{userId}?pwd=password</strong></li>
 </ul>
