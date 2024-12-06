@@ -1,0 +1,199 @@
+config:
+  target: http://goncalofmtukano.germanywestcentral.cloudapp.azure.com:8080/tukano-1/rest
+  plugins:
+    metrics-by-endpoint: {}
+  #  http:
+  #    timeout: 10
+  processor: ./test-utils.js
+  phases:
+    - name: "Shorts-testing"
+      duration: 1
+      arrivalRate: 1
+  variables:
+    hasCache: true
+#  payload:
+#    path: ../data/users.csv
+#    #order: sequence # selects users sequentially, default is random
+#    loadAll: true # load the whole CSV
+#    name: auth
+#    #skipHeader: true # The first line is a header, so we want to skip it
+#    #delimiter: "," # standard delimiter
+#    #skipEmptyLines: true # not important in our case
+#    fields:
+#      - "userid"
+#      - "pwd"
+#      - "email"
+#      - "displayName"
+
+Post Test Example: scenarios
+scenarios:
+  - name: TukanoShorts
+    flow:
+      #- loop:
+          # User creation
+      - log: "CREATE USERS"
+      - post:
+          url: /users/?hasCache={{ hasCache }}
+          headers:
+            Content-Type: application/json
+          afterResponse: "printStatus"
+          json:
+            userId: "kGallagher"
+            pwd: "easypass"
+            email: "kgallagher@gmail.com"
+            displayName: "Gallagher"
+      - post:
+          url: /users/?hasCache={{ hasCache }}
+          headers:
+            Content-Type: application/json
+          afterResponse: "printStatus"
+          json:
+            userId: "SergioDuarte"
+            pwd: "easypass"
+            email: "smd@gmail.com"
+            displayName: "SergioD"
+
+      # Shorts creation
+      - log: "CREATE SHORTS"
+      - post:
+          url: /shorts/kGallagher?pwd=easypass&hasCache={{ hasCache }}
+          afterResponse: "printStatus"
+          capture:
+              json: "$.shortId"
+              as: s1id
+      - post:
+          url: /shorts/SergioDuarte?pwd=easypass&hasCache={{ hasCache }}
+          afterResponse: "printStatus"
+          capture:
+              json: "$.shortId"
+              as: s2id
+      # getShort
+      - log: "GET SHORTS"
+      - get:
+          url: /shorts/{{ s1id }}?hasCache={{ hasCache }}
+          afterResponse: "printStatus"
+      - get:
+          url: /shorts/{{ s2id }}?hasCache={{ hasCache }}
+          afterResponse: "printStatus"
+      - get:
+          url: /shorts/{{ s1id }}?hasCache={{ hasCache }}
+          afterResponse: "printStatus"
+      - get:
+          url: /shorts/{{ s2id }}?hasCache={{ hasCache }}
+          afterResponse: "printStatus"
+      - get:
+          url: /shorts/{{ s2id }}?hasCache={{ hasCache }}
+          afterResponse: "printStatus"
+      - get:
+          url: /shorts/{{ s2id }}?hasCache={{ hasCache }}
+          afterResponse: "printStatus"
+      - get:
+          url: /shorts/{{ s1id }}?hasCache={{ hasCache }}
+          afterResponse: "printStatus"
+      # getShorts
+      - get:
+          url: /shorts/kGallagher/shorts?hasCache={{ hasCache }}
+          afterResponse: "printStatus"
+      - get:
+          url: /shorts/SergioDuarte/shorts?hasCache={{ hasCache }}
+          afterResponse: "printStatus"
+      - post:
+          url: /shorts/kGallagher?pwd=easypass&hasCache={{ hasCache }}
+          afterResponse: "printStatus"
+          capture:
+            json: "$.id"
+            as: s3id
+      - get:
+          url: /shorts/kGallagher/shorts?hasCache={{ hasCache }}
+          afterResponse: "printStatus"
+      - get:
+          url: /shorts/SergioDuarte/shorts?hasCache={{ hasCache }}
+          afterResponse: "printStatus"
+      - get:
+          url: /shorts/SergioDuarte/shorts?hasCache={{ hasCache }}
+          afterResponse: "printStatus"
+      - get:
+          url: /shorts/SergioDuarte/shorts?hasCache={{ hasCache }}
+          afterResponse: "printStatus"
+      - get:
+          url: /shorts/SergioDuarte/shorts?hasCache={{ hasCache }}
+          afterResponse: "printStatus"
+      - get:
+          url: /shorts/SergioDuarte/shorts?hasCache={{ hasCache }}
+          afterResponse: "printStatus"
+      #Follow
+      - log: "FOLLOW"
+      - post:
+          url: /shorts/SergioDuarte/kGallagher/followers?pwd=easypass&hasCache={{ hasCache }}
+          headers:
+            Content-Type: application/json
+          json:
+            isFollowing: true
+          afterResponse: "printStatus"
+      - post:
+          url: /shorts/kGallagher/SergioDuarte/followers?pwd=easypass&hasCache={{ hasCache }}
+          headers:
+            Content-Type: application/json
+          json:
+            isFollowing: true
+          afterResponse: "printStatus"
+      # Followers
+      - log: "FOLLOWERS"
+      - get:
+          url: /shorts/SergioDuarte/followers?pwd=easypass&hasCache={{ hasCache }}
+          afterResponse: "printStatus"
+      - get:
+          url: /shorts/SergioDuarte/followers?pwd=easypass&hasCache={{ hasCache }}
+          afterResponse: "printStatus"
+      - get:
+          url: /shorts/SergioDuarte/followers?pwd=easypass&hasCache={{ hasCache }}
+          afterResponse: "printStatus"
+      - get:
+          url: /shorts/SergioDuarte/followers?pwd=easypass&hasCache={{ hasCache }}
+          afterResponse: "printStatus"
+      - get:
+          url: /shorts/SergioDuarte/followers?pwd=easypass&hasCache={{ hasCache }}
+          afterResponse: "printStatus"
+      - get:
+          url: /shorts/SergioDuarte/followers?pwd=easypass&hasCache={{ hasCache }}
+          afterResponse: "printStatus"
+      - get:
+          url: /shorts/SergioDuarte/followers?pwd=easypass&hasCache={{ hasCache }}
+          afterResponse: "printStatus"
+      - log: "LIKE"
+      # Like
+      - post:
+          url: /shorts/{{ s2id }}/kGallagher/likes?pwd=easypass&hasCache={{ hasCache }}
+          json:
+            isLiked: true
+          afterResponse: "printStatus"
+      # Likes
+      - get:
+          url: /shorts/{{ s2id }}/likes?pwd=easypass&hasCache={{ hasCache }}
+          afterResponse: "printStatus"
+      - get:
+          url: /shorts/{{ s2id }}?hasCache=true
+          afterResponse: "printStatus"
+      - post:
+          url: /shorts/{{ s2id }}/SergioDuarte/likes?pwd=easypass&hasCache={{ hasCache }}
+          json:
+            isLiked: true
+          afterResponse: "printStatus"
+      - get:
+          url: /shorts/{{ s2id }}/likes?pwd=easypass&hasCache={{ hasCache }}
+          afterResponse: "printStatus"
+      - get:
+          url: /shorts/{{ s2id }}?hasCache={{ hasCache }}
+          afterResponse: "printStatus"
+      # Feed
+      - get:
+          url: /shorts/kGallagher/feed?hasCache={{ hasCache }}
+          afterResponse: "printStatus"
+      # Delete Short
+      #- delete:
+      #    url: /shorts/{{ s1id }}?pwd=easypass
+      #   # afterResponse: "printStatus"
+      #Delete All Shorts
+      #- delete:
+      #    url: /shorts/SergioDuarte?pwd=easypass&token=someTokenValue
+      #   # afterResponse: "printStatus"

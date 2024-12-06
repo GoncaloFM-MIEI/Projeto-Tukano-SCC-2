@@ -80,6 +80,9 @@ public class FilesystemStorage implements BlobStorage {
 
 		try {
 			var file = toFile( path );
+			if( ! file.exists() )
+				return error(NOT_FOUND);
+
 			Files.walk(file.toPath())
 			.sorted(Comparator.reverseOrder())
 			.map(Path::toFile)

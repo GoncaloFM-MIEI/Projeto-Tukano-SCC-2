@@ -34,9 +34,12 @@ public class JavaUsers implements Users {
 
 	static final String COOKIE_KEY = "scc:session";
 	static final String SESSION_PREFIX = "session:";
+	static final String ADMIN = "Admin";
 
 	private static final String REDIS_HOST = System.getenv("REDIS_HOST"); // Kubernetes Service name
+	private static final String HAS_CACHE = System.getenv("HAS_CACHE");
 	private static final int REDIS_PORT = Integer.parseInt(System.getenv("REDIS_PORT"));
+
 
 	//private Jedis jedis;
 	
@@ -57,22 +60,26 @@ public class JavaUsers implements Users {
 		if( badUserInfo( user ) )
 				return error(BAD_REQUEST);
 
+		if(hasCache()) {
 
-		Result<String> res = errorOrValue( DB.insertOne( user), user.getUserId());
+			Result<String> res = errorOrValue(DB.insertOne(user), user.getUserId());
 
-
-		if (res.isOK()){
-			try (Jedis jedis = RedisCache.getCachePool().getResource()) {
-				Log.info(()->String.format("\n\nCREATE USER (IN CACHE): %s\n\n", user.getUserId()));
-				var key = USER_PREFIX + user.getUserId();
-				var value = JSON.encode(user);
-				jedis.setex(key, EXPIRATION_TIME, value);
+			if (res.isOK()) {
+				try (Jedis jedis = RedisCache.getCachePool().getResource()) {
+					Log.info(() -> String.format("\n\nCREATE USER (IN CACHE): %s\n\n", user.getUserId()));
+					var key = USER_PREFIX + user.getUserId();
+					var value = JSON.encode(user);
+					jedis.setex(key, EXPIRATION_TIME, value);
+				}
 			}
+
+
+			return res;
+
+		}else {
+			return errorOrValue( DB.insertOne( user), user.getUserId() );
 		}
 
-
-
-		return res;
 	}
 
 	@Override
@@ -86,29 +93,34 @@ public class JavaUsers implements Users {
 			return error(FORBIDDEN);
 		}
 
-		try (Jedis jedis = RedisCache.getCachePool().getResource()) {
+		if(hasCache()){
+			try (Jedis jedis = RedisCache.getCachePool().getResource()) {
 
-			var key = USER_PREFIX + userId;
+				var key = USER_PREFIX + userId;
 
-			var value = jedis.get(key);
+				var value = jedis.get(key);
 
 
-			if (value != null) {
-				Log.info(() -> String.format("\nCache Access Time %s\n", JSON.decode(value, User.class))); // Convertendo para milissegundos
-				return Result.ok(JSON.decode(value, User.class));
+				if (value != null) {
+					Log.info(() -> String.format("\nCache Access Time %s\n", JSON.decode(value, User.class))); // Convertendo para milissegundos
+					return Result.ok(JSON.decode(value, User.class));
+				}
+
+				Result<User> u = validatedUserOrError( DB.getOne( userId, User.class), pwd);
+
+				if (u.isOK()) {
+					Log.info(() -> String.format("\n\nPUTTING USER IN CACHE: %s\n\n", u.value().getUserId()));
+					var user = JSON.encode(u.value());
+					jedis.setex(key,EXPIRATION_TIME, user);
+
+				}
+
+				return u;
 			}
-
-			Result<User> u = validatedUserOrError( DB.getOne( userId, User.class), pwd);
-
-			if (u.isOK()) {
-				Log.info(() -> String.format("\n\nPUTTING USER IN CACHE: %s\n\n", u.value().getUserId()));
-				var user = JSON.encode(u.value());
-				jedis.setex(key,EXPIRATION_TIME, user);
-
-			}
-
-			return u;
+		}else{
+			return validatedUserOrError( DB.getOne( userId, User.class), pwd);
 		}
+
 	}
 
 	@Override
@@ -118,40 +130,45 @@ public class JavaUsers implements Users {
 		if (badUpdateUserInfo(userId, pwd, other))
 			return error(BAD_REQUEST);
 
-		try (Jedis jedis = RedisCache.getCachePool().getResource()) {
+		if(hasCache()){
+			try (Jedis jedis = RedisCache.getCachePool().getResource()) {
 
-			var key = USER_PREFIX + userId;
-			var value = jedis.get(key);
+				var key = USER_PREFIX + userId;
+				var value = jedis.get(key);
 
-			//if user exists in cache just get him to avoid getting him from the DB
-			if (value != null) {
-				var user = JSON.decode(value, User.class);
-				Log.info(() -> String.format("\n\nUPDATE USER (IN CACHE) (OLD USER): %s\n\n", user.getUserId()));
-				Result<User> res;
+				//if user exists in cache just get him to avoid getting him from the DB
+				if (value != null) {
+					var user = JSON.decode(value, User.class);
+					Log.info(() -> String.format("\n\nUPDATE USER (IN CACHE) (OLD USER): %s\n\n", user.getUserId()));
+					Result<User> res;
 
-				res = errorOrValue(DB.updateOne( user.updateFrom(other)), other);
+					res = errorOrValue(DB.updateOne( user.updateFrom(other)), other);
 
-				//after updating, just overrite the same key with the updated user
-				if (res.isOK()) {
-					var newValue = JSON.encode(res.value());
-					jedis.setex(key,EXPIRATION_TIME, newValue);
+					//after updating, just overrite the same key with the updated user
+					if (res.isOK()) {
+						var newValue = JSON.encode(res.value());
+						jedis.setex(key,EXPIRATION_TIME, newValue);
+					}
+					return res;
+				} else {
+
+					Result<User> res = errorOrResult( validatedUserOrError(DB.getOne( userId, User.class), pwd), user -> DB.updateOne( user.updateFrom(other)));
+
+					if (res.isOK()) {
+						Log.info(() -> String.format("\n\nPUTTING USER UPDATE IN CACHE: %s\n\n", res.value().getUserId()));
+						var key1 = USER_PREFIX + res.value().getUserId();
+						var value1 = JSON.encode(res.value());
+						jedis.setex(key1,EXPIRATION_TIME, value1);
+						//jedis.expire(key, EXPIRATION_TIME);
+
+					}
+					return res;
 				}
-				return res;
-			} else {
-
-				Result<User> res = errorOrResult( validatedUserOrError(DB.getOne( userId, User.class), pwd), user -> DB.updateOne( user.updateFrom(other)));
-
-				if (res.isOK()) {
-					Log.info(() -> String.format("\n\nPUTTING USER UPDATE IN CACHE: %s\n\n", res.value().getUserId()));
-					var key1 = USER_PREFIX + res.value().getUserId();
-					var value1 = JSON.encode(res.value());
-					jedis.setex(key1,EXPIRATION_TIME, value1);
-					//jedis.expire(key, EXPIRATION_TIME);
-
-				}
-				return res;
 			}
+		}else{
+			return errorOrResult( validatedUserOrError(DB.getOne( userId, User.class), pwd), user -> DB.updateOne( user.updateFrom(other)));
 		}
+
 	}
 
 	@Override
@@ -161,30 +178,48 @@ public class JavaUsers implements Users {
 		if (userId == null || pwd == null )
 			return error(BAD_REQUEST);
 
-		Result<User> res =  DB.getOne( userId, User.class);
+		if(hasCache()) {
 
-		return errorOrResult( validatedUserOrError(res, pwd), user -> {
+			Result<User> res = DB.getOne(userId, User.class);
 
-			//Executors.defaultThreadFactory().newThread( () -> {
-			JavaShorts.getInstance().deleteAllShorts(userId, pwd, Token.get(userId));
+			return errorOrResult(validatedUserOrError(res, pwd), user -> {
 
-			//}).start();
+				//Executors.defaultThreadFactory().newThread( () -> {
+				JavaShorts.getInstance().deleteAllShorts(userId, pwd, Token.get(userId));
 
-			//Executors.defaultThreadFactory().newThread(() -> {
-			JavaBlobs.getInstance().deleteAllBlobs(userId, Token.get(userId));
-			//}).start();
+				//}).start();
 
-
-			Log.info(() -> String.format("\n\nDELETE USER (IN CACHE): %s\n\n", user.getUserId()));
-			try (Jedis jedis = RedisCache.getCachePool().getResource()) {
-				if (res.isOK()) {
-					var key = USER_PREFIX + res.value().getUserId();
-					jedis.del(key);
+				//Executors.defaultThreadFactory().newThread(() -> {
+				if (userId.equals(ADMIN)) {
+					JavaBlobs.getInstance().deleteAllBlobs(userId, Token.get(userId));
 				}
-			}
+				//}).start();
 
-			return DB.deleteOne( user);
-		});
+
+				Log.info(() -> String.format("\n\nDELETE USER (IN CACHE): %s\n\n", user.getUserId()));
+				try (Jedis jedis = RedisCache.getCachePool().getResource()) {
+					if (res.isOK()) {
+						var key = USER_PREFIX + res.value().getUserId();
+						jedis.del(key);
+					}
+				}
+
+				return DB.deleteOne(user);
+			});
+		}else{
+			return errorOrResult( validatedUserOrError(DB.getOne( userId, User.class), pwd), user -> {
+
+				//Executors.defaultThreadFactory().newThread( () -> {
+				JavaShorts.getInstance().deleteAllShorts(userId, pwd, Token.get(userId));
+
+				if(userId.equals(ADMIN)) {
+					JavaBlobs.getInstance().deleteAllBlobs(userId, Token.get(userId));
+				}
+				//}).start();
+
+				return DB.deleteOne( user);
+			});
+		}
 	}
 
 	@Override
@@ -240,5 +275,11 @@ public class JavaUsers implements Users {
 		}
 
 		return true;
+	}
+
+
+
+	public boolean hasCache(){
+		return HAS_CACHE.equals("true");
 	}
 }
