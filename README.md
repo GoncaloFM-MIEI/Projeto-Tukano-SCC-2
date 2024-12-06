@@ -15,5 +15,5 @@
 <p>To be noted:</p>
 <ul>
     <li>Login endpoint: <strong>url/login/{userId}?pwd=password</strong></li>
-    <li>We developed the project in Kubernetes branch and we only merged to main right before the delivery; in case of any problam please try kubernetes branch last commit :)</li>
+    <li>We developed the project in Kubernetes branch and we only merged to main right before the delivery; in case of any problem please try kubernetes branch last commit :)</li>
 </ul>
